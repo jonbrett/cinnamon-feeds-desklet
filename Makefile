@@ -1,7 +1,7 @@
 BUILD_DIR := BUILD
-PACKAGE_DIR := feeds@jonbrettdev.wordpress.com
+PACKAGE_DIR := feedsdesklet@jonbrettdev.wordpress.com
 VERSION := $(shell git describe --tags 2>/dev/null)
-INSTALL_DIR := ~/.local/share/cinnamon/applets/$(PACKAGE_DIR)
+INSTALL_DIR := ~/.local/share/cinnamon/desklets/$(PACKAGE_DIR)
 
 ZIP_FILE := $(PACKAGE_DIR)-$(VERSION).zip
 EXCLUDES := .git Makefile

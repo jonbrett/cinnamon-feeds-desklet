@@ -1,12 +1,13 @@
 {
-    "uuid": "feeds@jonbrettdev.wordpress.com",
+    "uuid": "feedsdesklet@jonbrettdev.wordpress.com",
     "name": "Feeds Reader",
-    "description": "Displays RSS news feeds",
+    "description": "Displays RSS news feeds in a desklet",
     "original-authors": [
         "jonbrett.dev@gmail.com",
         "lamouletrescool@gmail.com"
     ],
-    "version": 0.8,
+    "version": 0.1,
     "url": "jonbrettdev.wordpress.com",
-    "max-instances": "10"
+    "max-instances": "10",
+    "prevent-decorations": false
 }
