@@ -1,38 +1,23 @@
-.feedreader-title {
-    spacing: .5em;
-}
-
-.feedreader-title-image {
-    border: 2px solid white;
-    background-color: white;
-    border-radius: 2px;
-    padding: 0;
-    spacing: 0;
-
-}
-
-.feedreader-title-buttons {
-    spacing: .5em;
-}
-
-.feedreader-title-label {
+.feeds-desklet-title {
     font-weight: bold;
+    padding: .3em 1em;
+    border-bottom: 2px solid #777;
+}
+.feeds-desklet-content > StButton {
+    text-align: left;
+    padding: .2em .1em;
 }
 
-.feedreader-item {
-    spacing: 1em;
-    padding-left: 0em;
+.feeds-desklet-content > StButton:hover {
+    background-color: #777;
 }
 
-.feedreader-status {
-    spacing: .5em;
-    padding-left: 0em;
-    padding-right: .5em;
+.feeds-desklet-item {
+    text-align: left;
 }
 
-.feedreader-status > StLabel {
-    text-align: center;
-    font-weight: bold;
+.feeds-desklet-item > StLabel {
+    text-align: left;
 }
 
 /* Cinnamon tooltips use id="Tooltip", but the default theme (and most others

@@ -8,6 +8,6 @@
     ],
     "version": 0.1,
     "url": "jonbrettdev.wordpress.com",
-    "max-instances": "10",
+    "max-instances": "1",
     "prevent-decorations": false
 }

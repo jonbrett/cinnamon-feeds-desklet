@@ -61,6 +61,103 @@ function cinnamon_version_gte(version) {
     return true;
 }
 
+/* FeedViewer
+ * Displays a single feed
+ */
+
+function FeedViewer() {
+    this._init.apply(this, arguments);
+}
+
+FeedViewer.prototype = {
+    _init: function(owner, url, params) {
+
+        /* Init tab */
+        this.tab = new St.BoxLayout();
+        this.tab.add(new St.Label({text: _("...")}));
+
+        /* Init content */
+        this.content = new St.BoxLayout({
+            vertical: true,
+            style_class: "feeds-desklet-content"
+        });
+        this.content.add(new St.Label({text: _("Loading")}));
+
+        this.reader = new FeedReader.FeedReader(url,
+                '~/.cinnamon/' + UUID + '/' + owner.instance_id,
+                {
+                    'onUpdate' : Lang.bind(this, this.update),
+                    'onError' : Lang.bind(this, this.error)
+                });
+    },
+
+    refresh: function() {
+        this.reader.get();
+    },
+
+    update: function() {
+        this.content.destroy_all_children();
+
+        /* Update content box with feed children */
+        for (var i = 0; i < this.reader.items.length; i++) {
+            let box = new St.BoxLayout({
+                style_class: "feeds-desklet-item",
+            });
+            let label = new St.Label({
+                text: FeedReader.html2text(this.reader.items[i].title)
+            });
+            box.add(label);
+
+            let button = new St.Button({
+                reactive: true,
+            });
+            button.url = this.reader.items[i].link;
+            button.connect('clicked', Lang.bind(this, function(button, event) {
+                Util.spawnCommandLine('xdg-open ' + button.url);
+            }));
+            button.set_child(box);
+
+            this.content.add(button);
+        }
+
+        /* Update title */
+        if (this.custom_title == undefined) {
+            this.tab.destroy_all_children();
+            this.tab.add(new St.Label({
+                text: this.reader.title,
+                style_class: "feeds-desklet-title"
+            }));
+        }
+    },
+
+    error: function(reader, message, full_message) {
+        this.content.destroy_all_children();
+
+        let label = new St.Label({text: message});
+        this.content.add(label);
+    },
+
+    update_params: function(params) {
+        /* TODO */
+    },
+
+    get_tab: function() {
+        return this.tab;
+    },
+
+    get_content: function() {
+        let scrollview = new St.ScrollView({
+            hscrollbar_policy: Gtk.PolicyType.NEVER,
+            vscrollbar_policy: Gtk.PolicyType.AUTOMATIC
+        });
+
+        scrollview.add_actor(this.content);
+        scrollview.set_height(500);
+        return scrollview;
+    },
+}
+
+
 /* Menu item for displaying a simple message */
 function FeedDesklet() {
     this._init.apply(this, arguments);
@@ -74,6 +171,7 @@ FeedDesklet.prototype = {
 
         try {
             this.feeds = new Array();
+            this.feed_to_show = -1;
             this.path = metadata.path;
             this.icon_path = metadata.path + '/icons/';
             Gtk.IconTheme.get_default().append_search_path(this.icon_path);
@@ -87,6 +185,15 @@ FeedDesklet.prototype = {
         }
 
         this.init_settings();
+    },
+
+    draw: function() {
+        this.mainbox.destroy_all_children();
+
+        if (this.feed_to_show >= 0) {
+            this.mainbox.add(this.feeds[0].get_tab());
+            this.mainbox.add(this.feeds[0].get_content());
+        }
     },
 
     init_settings: function(instance_id) {
@@ -142,6 +249,14 @@ FeedDesklet.prototype = {
     // called when feeds have been added or removed
     feeds_changed: function(url_list) {
         this.feeds = new Array();
+
+        for (var i = 0; i < url_list.length; i++) {
+            this.feeds[i] = new FeedViewer(this, url_list[i].url, {
+                max_items: 100,
+            });
+        }
+        this.feed_to_show = 0;
+        this.draw();
         this.refresh();
     },
 
@@ -202,6 +317,7 @@ FeedDesklet.prototype = {
     /* Feed manager functions */
     manage_feeds: function() {
         let argv = [this.path + "/manage_feeds.py"];
+        global.log("Starting : " + argv);
         let [exit, pid, stdin, stdout, stderr] = GLib.spawn_async_with_pipes(
                 null,
                 argv,
