@@ -70,7 +70,11 @@ function FeedViewer() {
 }
 
 FeedViewer.prototype = {
-    _init: function(owner, url, params) {
+    _init: function(owner, url, id, params) {
+
+        this.owner = owner;
+        this.url = url;
+        this.id = id;
 
         /* Init tab */
         this.tab = new St.BoxLayout();
@@ -83,6 +87,12 @@ FeedViewer.prototype = {
             vertical: true
         });
         this.content.add(new St.Label({text: _("Loading")}));
+
+        this.scrollview = new St.ScrollView({
+            hscrollbar_policy: Gtk.PolicyType.NEVER,
+            vscrollbar_policy: Gtk.PolicyType.AUTOMATIC
+        });
+        this.scrollview.add_actor(this.content);
 
         this.reader = new FeedReader.FeedReader(url,
                 '~/.cinnamon/' + UUID + '/' + owner.instance_id,
@@ -103,10 +113,9 @@ FeedViewer.prototype = {
         for (var i = 0; i < this.reader.items.length; i++) {
             let box = new St.BoxLayout();
 
+            let icon_name = 'feed-new-symbolic';
             if (this.reader.items[i].read)
                 icon_name = 'feed-symbolic';
-            else
-                icon_name = 'feed-new-symbolic';
             let icon = new St.Icon({
                 icon_name: icon_name,
                 icon_type: St.IconType.SYMBOLIC,
@@ -132,14 +141,19 @@ FeedViewer.prototype = {
             button.set_child(box);
 
             this.content.add(button);
-        }
+        };
 
         /* Update title */
         if (this.custom_title == undefined) {
             this.tab.destroy_all_children();
-            this.tab.add(new St.Button({
+            let button = new St.Button({
                 label: this.reader.title,
+            });
+            button.connect('clicked', Lang.bind(this, function(button, event) {
+                this.owner.set_feed_to_show(this.id);
             }));
+
+            this.tab.add(button);
         }
     },
 
@@ -159,13 +173,7 @@ FeedViewer.prototype = {
     },
 
     get_content: function() {
-        let scrollview = new St.ScrollView({
-            hscrollbar_policy: Gtk.PolicyType.NEVER,
-            vscrollbar_policy: Gtk.PolicyType.AUTOMATIC
-        });
-
-        scrollview.add_actor(this.content);
-        return scrollview;
+        return this.scrollview;
     },
 }
 
@@ -183,7 +191,6 @@ FeedDesklet.prototype = {
 
         try {
             this.feeds = new Array();
-            this.feed_to_show = -1;
             this.path = metadata.path;
             this.icon_path = metadata.path + '/icons/';
             Gtk.IconTheme.get_default().append_search_path(this.icon_path);
@@ -215,7 +222,6 @@ FeedDesklet.prototype = {
     },
 
     draw: function() {
-
         /* Populate tab box */
         this.tabbox.destroy_all_children();
         for (var i in this.feeds) {
@@ -228,11 +234,17 @@ FeedDesklet.prototype = {
 
         /* Populate content box */
         this.contentbox.destroy_all_children();
-        if (this.feed_to_show >= 0) {
-            this.contentbox.add(this.feeds[this.feed_to_show].get_content());
+        if (this.feed_to_show != undefined) {
+            this.contentbox.add(this.feed_to_show.get_content());
         } else {
             this.contentbox.add(new St.Label({text: _("No feeds to show")}));
         }
+    },
+
+    set_feed_to_show: function(id) {
+        global.log("setting feed to " + id);
+        this.feed_to_show = this.feeds[id];
+        this.draw();
     },
 
     init_settings: function(instance_id) {
@@ -290,11 +302,11 @@ FeedDesklet.prototype = {
         this.feeds = new Array();
 
         for (var i = 0; i < url_list.length; i++) {
-            this.feeds[i] = new FeedViewer(this, url_list[i].url, {
-                max_items: 100,
+            this.feeds[i] = new FeedViewer(this, url_list[i].url, i, {
+                show_read_items: true,
             });
         }
-        this.feed_to_show = 0;
+        this.feed_to_show = this.feeds[0];
         this.draw();
         this.refresh();
     },
