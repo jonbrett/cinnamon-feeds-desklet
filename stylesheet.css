@@ -1,23 +1,44 @@
-.feeds-desklet-title {
-    font-weight: bold;
-    padding: .3em 1em;
-    border-bottom: 2px solid #777;
+
+/* Content styling */
+.feeds-desklet-contentbox {
+    padding: 0 .4em .4em;
 }
-.feeds-desklet-content > StButton {
+
+.feeds-desklet-contentbox StButton {
     text-align: left;
     padding: .2em .1em;
 }
 
-.feeds-desklet-content > StButton:hover {
+.feeds-desklet-contentbox StButton StBoxLayout {
+    spacing: .5em
+}
+
+.feeds-desklet-contentbox StButton:hover {
     background-color: #777;
 }
 
-.feeds-desklet-item {
-    text-align: left;
+/* Tabs styling */
+.feeds-desklet-tabbox {
+    padding: .2em .2em 0 .2em;
 }
 
-.feeds-desklet-item > StLabel {
-    text-align: left;
+.feeds-desklet-tabbox StButton {
+    font-weight: bold;
+    margin-top: 1em;
+    padding: .3em 1em;
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
+    border-right: 2px solid #aaa;
+    border-radius-topleft: 5px;
+    border-radius-topright: 5px;
+}
+
+.feeds-desklet-tabbox StButton:hover {
+    background-color: #777;
+}
+
+.feeds-desklet-tabpadding {
+    border-bottom: 1px solid #aaa;
 }
 
 /* Cinnamon tooltips use id="Tooltip", but the default theme (and most others

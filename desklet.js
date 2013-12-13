@@ -74,12 +74,13 @@ FeedViewer.prototype = {
 
         /* Init tab */
         this.tab = new St.BoxLayout();
-        this.tab.add(new St.Label({text: _("...")}));
+        this.tab.add(new St.Button({
+            label: _("...")
+        }));
 
         /* Init content */
         this.content = new St.BoxLayout({
-            vertical: true,
-            style_class: "feeds-desklet-content"
+            vertical: true
         });
         this.content.add(new St.Label({text: _("Loading")}));
 
@@ -100,20 +101,33 @@ FeedViewer.prototype = {
 
         /* Update content box with feed children */
         for (var i = 0; i < this.reader.items.length; i++) {
-            let box = new St.BoxLayout({
-                style_class: "feeds-desklet-item",
+            let box = new St.BoxLayout();
+
+            if (this.reader.items[i].read)
+                icon_name = 'feed-symbolic';
+            else
+                icon_name = 'feed-new-symbolic';
+            let icon = new St.Icon({
+                icon_name: icon_name,
+                icon_type: St.IconType.SYMBOLIC,
+                style_class: 'popup-menu-icon'
             });
+            box.add(icon);
+
             let label = new St.Label({
                 text: FeedReader.html2text(this.reader.items[i].title)
             });
-            box.add(label);
+            box.add(label, {fill: true, expand: true});
 
             let button = new St.Button({
+                x_align: 0,
                 reactive: true,
             });
-            button.url = this.reader.items[i].link;
+            button.item = this.reader.items[i];
+            button.icon = icon;
             button.connect('clicked', Lang.bind(this, function(button, event) {
-                Util.spawnCommandLine('xdg-open ' + button.url);
+                button.icon.set_icon_name('feed-symbolic');
+                button.item.open();
             }));
             button.set_child(box);
 
@@ -123,9 +137,8 @@ FeedViewer.prototype = {
         /* Update title */
         if (this.custom_title == undefined) {
             this.tab.destroy_all_children();
-            this.tab.add(new St.Label({
-                text: this.reader.title,
-                style_class: "feeds-desklet-title"
+            this.tab.add(new St.Button({
+                label: this.reader.title,
             }));
         }
     },
@@ -152,7 +165,6 @@ FeedViewer.prototype = {
         });
 
         scrollview.add_actor(this.content);
-        scrollview.set_height(500);
         return scrollview;
     },
 }
@@ -176,10 +188,25 @@ FeedDesklet.prototype = {
             this.icon_path = metadata.path + '/icons/';
             Gtk.IconTheme.get_default().append_search_path(this.icon_path);
 
-            this.mainbox = new St.BoxLayout({vertical: true});
-            this.setContent(this.mainbox);
+            /* TODO: make size configurable */
+            this.width = 400;
+            this.height = 500;
 
-            this.mainbox.add(new St.Label({text: _("Loading")}));
+            /* Create layout */
+            this.tabbox = new St.BoxLayout({
+                style_class: "feeds-desklet-tabbox"
+            });
+            this.contentbox = new St.BoxLayout({
+                style_class: "feeds-desklet-contentbox"
+            });
+
+            this.mainbox = new St.BoxLayout({vertical: true});
+            this.mainbox.set_height(this.height);
+            this.mainbox.set_width(this.width);
+            this.mainbox.add(this.tabbox);
+            this.mainbox.add(this.contentbox);
+
+            this.setContent(this.mainbox);
         } catch (e) {
             global.logError(e);
         }
@@ -188,11 +215,23 @@ FeedDesklet.prototype = {
     },
 
     draw: function() {
-        this.mainbox.destroy_all_children();
 
+        /* Populate tab box */
+        this.tabbox.destroy_all_children();
+        for (var i in this.feeds) {
+            this.tabbox.add(this.feeds[i].get_tab());
+        }
+        let padding = new St.Label({
+            style_class: "feeds-desklet-tabpadding"
+        });
+        this.tabbox.add(padding, {fill: true, expand: true});
+
+        /* Populate content box */
+        this.contentbox.destroy_all_children();
         if (this.feed_to_show >= 0) {
-            this.mainbox.add(this.feeds[0].get_tab());
-            this.mainbox.add(this.feeds[0].get_content());
+            this.contentbox.add(this.feeds[this.feed_to_show].get_content());
+        } else {
+            this.contentbox.add(new St.Label({text: _("No feeds to show")}));
         }
     },
 
